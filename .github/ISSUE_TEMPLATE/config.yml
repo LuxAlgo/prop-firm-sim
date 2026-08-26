@@ -1,0 +1,6 @@
+# Blank issues stay enabled on purpose - not every report fits a form.
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & ideas
+    url: https://github.com/LuxAlgo/prop-firm-sim/discussions
+    about: Ask questions or discuss the simulator, methodology, or rules data before filing an issue.

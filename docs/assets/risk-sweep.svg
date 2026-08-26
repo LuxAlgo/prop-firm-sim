@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 470" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" role="img" aria-label="Risk sweep: pass probability and expected value versus risk per trade. The risk that maximizes pass probability (0.1%) differs from the risk that maximizes EV (0.8%).">
+  <style>
+    :root { color-scheme: light dark; }
+    text { fill: #52514e; font-size: 12px; }
+    .tick { fill: #898781; font-size: 11px; font-variant-numeric: tabular-nums; }
+    .title { fill: #0b0b0b; font-size: 15px; font-weight: 600; }
+    .subtitle { fill: #52514e; font-size: 12px; }
+    .panel-label { fill: #0b0b0b; font-size: 12px; font-weight: 600; }
+    .grid { stroke: #e1e0d9; stroke-width: 1; }
+    .zero { stroke: #c3c2b7; stroke-width: 1; }
+    .pass { stroke: #2a78d6; }
+    .pass-fill { fill: #2a78d6; }
+    .ev { stroke: #eb6834; }
+    .ev-fill { fill: #eb6834; }
+    .ring { stroke: #ffffff; }
+    .marker-line { stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.75; }
+    @media (prefers-color-scheme: dark) {
+      text { fill: #c3c2b7; }
+      .tick { fill: #898781; }
+      .title { fill: #ffffff; }
+      .subtitle { fill: #c3c2b7; }
+      .panel-label { fill: #ffffff; }
+      .grid { stroke: #2c2c2a; }
+      .zero { stroke: #383835; }
+      .pass { stroke: #3987e5; }
+      .pass-fill { fill: #3987e5; }
+      .ev { stroke: #d95926; }
+      .ev-fill { fill: #d95926; }
+      .ring { stroke: #0d1117; }
+    }
+  </style>
+
+  <text class="title" x="56" y="22">The risk that maximizes passing is not the risk that maximizes EV</text>
+  <text class="subtitle" x="56" y="40">100K 2-Step Challenge · 48% win rate · 1.6R avg win · 4 trades/day · 10,000 paths · seed 42</text>
+
+  <!-- panel 1: pass probability -->
+  <text class="panel-label" x="56" y="52">Pass probability per attempt</text>
+  <g>
+    <line class="grid" x1="56" x2="700" y1="208.0" y2="208.0"/><text class="tick" x="48" y="211.5" text-anchor="end">0%</text>
+    <line class="grid" x1="56" x2="700" y1="133.0" y2="133.0"/><text class="tick" x="48" y="136.5" text-anchor="end">50%</text>
+    <line class="grid" x1="56" x2="700" y1="58.0" y2="58.0"/><text class="tick" x="48" y="61.5" text-anchor="end">100%</text>
+  </g>
+  <line class="marker-line pass" x1="56.0" x2="56.0" y1="58" y2="400"/>
+  <line class="marker-line ev" x1="211.4" x2="211.4" y1="58" y2="400"/>
+  <path class="pass" d="M56.0,58.0L78.2,58.0L100.4,58.0L122.6,58.2L144.8,58.8L167.0,59.7L189.2,62.2L211.4,67.0L233.7,75.4L255.9,93.7L278.1,93.5L300.3,97.2L322.5,119.3L344.7,117.3L366.9,122.5L389.1,119.9L411.3,144.5L433.5,142.6L455.7,141.3L477.9,139.7L500.1,144.8L522.3,144.1L544.6,141.0L566.8,140.6L589.0,165.3L611.2,165.3L633.4,163.1L655.6,162.6L677.8,162.6L700.0,160.9" fill="none" stroke-width="2" stroke-linejoin="round"/>
+  <circle class="pass-fill ring" cx="56.0" cy="58.0" r="4.5" stroke-width="2"/>
+  <text class="tick" x="64.0" y="76.0">max pass @ 0.1% risk</text>
+
+  <!-- panel 2: EV -->
+  <text class="panel-label" x="56" y="244">Expected value (fees vs funded payouts, 10,000 simulated journeys)</text>
+  <g>
+    <line class="grid" x1="56" x2="700" y1="400.0" y2="400.0"/><text class="tick" x="48" y="403.5" text-anchor="end">$0</text>
+    <line class="grid" x1="56" x2="700" y1="350.0" y2="350.0"/><text class="tick" x="48" y="353.5" text-anchor="end">$20k</text>
+    <line class="grid" x1="56" x2="700" y1="300.0" y2="300.0"/><text class="tick" x="48" y="303.5" text-anchor="end">$40k</text>
+    <line class="grid" x1="56" x2="700" y1="250.0" y2="250.0"/><text class="tick" x="48" y="253.5" text-anchor="end">$60k</text>
+  </g>
+  <line class="zero" x1="56" x2="700" y1="400.0" y2="400.0"/>
+  <path class="ev" d="M56.0,382.0L78.2,363.9L100.4,346.0L122.6,328.3L144.8,310.4L167.0,293.3L189.2,279.0L211.4,271.1L233.7,274.0L255.9,307.6L278.1,300.8L300.3,307.2L322.5,350.6L344.7,347.7L366.9,356.4L389.1,352.5L411.3,381.6L433.5,381.8L455.7,380.8L477.9,379.2L500.1,385.1L522.3,384.2L544.6,382.7L566.8,382.1L589.0,399.2L611.2,399.1L633.4,399.0L655.6,399.0L677.8,398.8L700.0,398.4" fill="none" stroke-width="2" stroke-linejoin="round"/>
+  <circle class="ev-fill ring" cx="211.4" cy="271.1" r="4.5" stroke-width="2"/>
+  <text class="tick" x="219.4" y="289.1">max EV @ 0.8% risk</text>
+
+  <text class="tick" x="378" y="462" text-anchor="middle">risk per trade (% of initial account)</text>
+  <text class="tick" x="144.8" y="418" text-anchor="middle">0.5%</text>
+    <text class="tick" x="255.9" y="418" text-anchor="middle">1%</text>
+    <text class="tick" x="366.9" y="418" text-anchor="middle">1.5%</text>
+    <text class="tick" x="477.9" y="418" text-anchor="middle">2%</text>
+    <text class="tick" x="589.0" y="418" text-anchor="middle">2.5%</text>
+    <text class="tick" x="700.0" y="418" text-anchor="middle">3%</text>
+</svg>

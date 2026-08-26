@@ -1,0 +1,5 @@
+Timestamp,B/S,Contract,filledQty,Price,Status
+07/07/2026 09:31:12,B,MNQU6,2,18100.25,Filled
+07/07/2026 09:40:00,S,MNQU6,2,18130.25,Filled
+07/07/2026 09:50:00,S,MNQU6,2,18200.00,Canceled
+07/07/2026 10:00:00,B,MNQU6,1,18000.00,Working

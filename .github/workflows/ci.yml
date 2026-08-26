@@ -1,0 +1,90 @@
+# Quality gates for every change. Nothing merges or deploys without this
+# workflow being green - treat it as the reviewer of record.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Build & test gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # No `version:` on purpose - pnpm/action-setup reads "packageManager"
+      # from package.json, so the version is pinned in exactly one place.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Formatting (prettier)
+        run: pnpm format:check
+
+      - name: Dependency license audit
+        run: pnpm licenses list --json | node scripts/check-dep-licenses.mjs
+
+      - name: Unit tests
+        run: pnpm test:run --reporter=default --reporter=json --outputFile=vitest-report.json
+
+      - name: Publish test summary
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            try {
+              const r = JSON.parse(fs.readFileSync("vitest-report.json", "utf8"));
+              const failed = r.numFailedTests ? ` · **${r.numFailedTests} failed**` : "";
+              const skipped = r.numPendingTests ? ` · ${r.numPendingTests} skipped` : "";
+              fs.appendFileSync(
+                process.env.GITHUB_STEP_SUMMARY,
+                `### Unit tests\n\n${r.numPassedTests}/${r.numTotalTests} passed${failed}${skipped}\n`,
+              );
+            } catch {
+              // The test step crashed before writing a report; its own log has the details.
+            }
+          '
+
+  dco:
+    name: DCO sign-off
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Every commit carries a Signed-off-by line
+        run: |
+          base='${{ github.event.pull_request.base.sha }}'
+          head='${{ github.event.pull_request.head.sha }}'
+          missing=0
+          for sha in $(git rev-list --no-merges "$base".."$head"); do
+            if ! git show -s --format=%B "$sha" | grep -qiE '^Signed-off-by: .+<.+>'; then
+              echo "::error::Commit $sha is missing a Signed-off-by line. Amend with: git commit --amend -s"
+              missing=1
+            fi
+          done
+          exit $missing

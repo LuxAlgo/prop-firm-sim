@@ -1,0 +1,61 @@
+{
+  "name": "@luxalgo/prop-firm-sim-core",
+  "version": "1.1.0",
+  "description": "Seedable, browser-safe Monte Carlo engine for prop-firm challenge simulation: pass probability, expected attempts, expected cost, EV, and optimal risk sizing from a trader profile and a firm's exact ruleset - with every assumption visible.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./directory": {
+      "types": "./dist/directory/index.d.ts",
+      "default": "./dist/directory/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "keywords": [
+    "prop-firm",
+    "prop-trading",
+    "trading-challenge",
+    "evaluation",
+    "monte-carlo",
+    "simulation",
+    "expected-value",
+    "drawdown",
+    "risk-of-ruin",
+    "trading"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuxAlgo/prop-firm-sim.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/LuxAlgo/prop-firm-sim#readme",
+  "bugs": {
+    "url": "https://github.com/LuxAlgo/prop-firm-sim/issues"
+  },
+  "author": "LuxAlgo (https://luxalgo.com)",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

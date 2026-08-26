@@ -1,0 +1,48 @@
+{
+  "name": "@luxalgo/prop-firm-sim-mcp",
+  "version": "1.1.0",
+  "description": "MCP server exposing the open-source prop-firm challenge simulator to AI agents: firm rulesets with citations, Monte Carlo simulation, optimal risk sweeps, cross-firm comparison, and bootstrap simulation from a real trade series.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "prop-firm-sim-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@luxalgo/prop-firm-sim-core": "workspace:^",
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "zod": "^3.25.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "prop-firm",
+    "trading-challenge",
+    "monte-carlo",
+    "trading"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuxAlgo/prop-firm-sim.git",
+    "directory": "packages/mcp"
+  },
+  "homepage": "https://github.com/LuxAlgo/prop-firm-sim#readme",
+  "bugs": {
+    "url": "https://github.com/LuxAlgo/prop-firm-sim/issues"
+  },
+  "author": "LuxAlgo (https://luxalgo.com)",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}

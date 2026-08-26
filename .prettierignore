@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+pnpm-lock.yaml
+packages/core/src/dataset/generated.ts
+data/schema/firm.schema.json
+CHANGELOG.md
+
+# Import test fixtures are byte-exact export replicas; never reformat.
+packages/core/tests/fixtures/

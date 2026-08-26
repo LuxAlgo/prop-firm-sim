@@ -1,0 +1,77 @@
+# Changesets release flow. On every push to main the action either
+# (a) opens/refreshes the "Version Packages" PR from pending changesets, or
+# (b) if that PR was just merged, publishes the bumped packages to npm.
+# Publishing requires the NPM_TOKEN secret; without it the workflow still
+# maintains Version Packages PRs and cleanly skips the npm publish.
+name: Release
+
+on:
+  push:
+    branches: [main]
+  # Manual trigger for the first publish after NPM_TOKEN is added, so nobody
+  # has to push an empty commit to re-run the release.
+  workflow_dispatch:
+
+permissions:
+  contents: write # push the version branch, create tags/releases
+  pull-requests: write # open/update the "Version Packages" PR
+  id-token: write # npm provenance attestation (publishConfig.provenance)
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version packages & publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # changesets inspects git history
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build publishable packages
+        run: pnpm build
+
+      - name: Detect npm credentials
+        id: npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "NPM_TOKEN secret is not configured - skipping npm publish (Version Packages PRs are still maintained)."
+          fi
+
+      - name: Version PR / publish to npm
+        if: steps.npm.outputs.present == 'true'
+        uses: changesets/action@v1
+        with:
+          version: pnpm exec changeset version
+          publish: pnpm exec changeset publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Version PR only (npm publish skipped - no NPM_TOKEN)
+        if: steps.npm.outputs.present != 'true'
+        uses: changesets/action@v1
+        with:
+          version: pnpm exec changeset version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

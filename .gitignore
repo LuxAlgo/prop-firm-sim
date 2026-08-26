@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+.DS_Store
+.vite/
+.cache/
+
+# Local environment files: credentials never live in this repository.
+.env
+.env.*

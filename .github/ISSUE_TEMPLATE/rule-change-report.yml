@@ -1,0 +1,44 @@
+name: Rule change report
+description: The LuxAlgo directory (or an inference by the adapter) is out of date or wrong versus the firm's own page.
+title: "[rule change] <firm>: <what changed>"
+labels: ["rules-data", "rule-change"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks - rule drift reports keep the simulations trustworthy. The firm's own page is always
+        authoritative over the directory; this report tells LuxAlgo's team what to re-verify in the
+        directory (and, if the directory is right but the adapter inferred the wrong semantics,
+        tells the maintainers what to fix here).
+  - type: input
+    id: firm
+    attributes:
+      label: Firm
+      description: "The firm's id or name as shown by the CLI's `firms` command or the MCP `list_firms` tool."
+      placeholder: ftmo
+    validations:
+      required: true
+  - type: input
+    id: challenge
+    attributes:
+      label: Challenge
+      description: "`challengeId` or display name from the same listing. Leave empty if the change affects the whole firm."
+      placeholder: 100k-2step
+    validations:
+      required: false
+  - type: textarea
+    id: what-changed
+    attributes:
+      label: What changed
+      description: The rule as the simulator currently reports it versus the firm's own page, as precisely as you can. Quote the firm's wording if possible.
+      placeholder: "Daily loss changed from 5% of prior-day equity to 4% of initial balance; reset fee dropped to ..."
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Link to the firm's page
+      description: Public page on the firm's own site showing the current rule (strip tracking parameters).
+      placeholder: https://example-firm.com/trading-objectives
+    validations:
+      required: true

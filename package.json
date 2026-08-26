@@ -1,0 +1,30 @@
+{
+  "name": "prop-firm-sim",
+  "private": true,
+  "description": "Open-source prop-firm challenge simulator: Monte Carlo over your trading statistics and a firm's exact ruleset.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.0.8",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "bench": "node scripts/bench.mjs",
+    "changeset": "changeset",
+    "release": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.0",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "prettier": "^3.6.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

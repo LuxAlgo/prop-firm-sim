@@ -1,0 +1,47 @@
+{
+  "name": "@luxalgo/prop-firm-sim-cli",
+  "version": "1.1.0",
+  "description": "CLI for the open-source prop-firm challenge simulator: pass probability, expected attempts, expected cost, EV, and optimal risk sizing against real firms' public rulesets.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "prop-firm-sim": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@luxalgo/prop-firm-sim-core": "workspace:^",
+    "commander": "^14.0.0"
+  },
+  "keywords": [
+    "prop-firm",
+    "trading-challenge",
+    "monte-carlo",
+    "cli",
+    "expected-value",
+    "trading"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuxAlgo/prop-firm-sim.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/LuxAlgo/prop-firm-sim#readme",
+  "bugs": {
+    "url": "https://github.com/LuxAlgo/prop-firm-sim/issues"
+  },
+  "author": "LuxAlgo (https://luxalgo.com)",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  }
+}
