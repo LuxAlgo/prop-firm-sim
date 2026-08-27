@@ -1,5 +1,11 @@
 # @luxalgo/prop-firm-sim-core
 
+## 1.1.1
+
+### Patch Changes
+
+- Restore the em dash in the import pipeline's character handling: `&mdash;` decodes to a real em dash again, and an em dash placeholder cell counts as empty in statement tables, matching hyphen and en dash. Both literals had regressed to plain hyphens in a documentation typography pass; they are now written as unicode escapes, with a regression test pinning the behavior.
+
 ## 1.1.0
 
 ### Minor Changes

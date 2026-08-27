@@ -9,7 +9,7 @@ import {
   type TradeEvent,
 } from "../src/import/reconstruct.js";
 import { resolveR, riskFromStop } from "../src/import/rmultiple.js";
-import type { ImportedTrade, ImportIssue } from "../src/import/model.js";
+import { isEmptyCell, type ImportedTrade, type ImportIssue } from "../src/import/model.js";
 
 /*
   Reconstruction and R rules. These are the layers where a wrong guess turns
@@ -529,6 +529,17 @@ describe("HTML statement extraction", () => {
   it("&minus; decodes to a Unicode minus the number parser understands", () => {
     expect(decodeEntities("&minus;3.50")).toBe("−3.50");
     expect(parseNumberCell(decodeEntities("&minus;3.50"))).toBe(-3.5);
+  });
+
+  it("&mdash; decodes to a real em dash", () => {
+    expect(decodeEntities("&mdash;")).toBe("—");
+  });
+
+  it("dash placeholder cells (hyphen, en dash, em dash) all count as empty", () => {
+    for (const dash of ["-", "–", "—"]) {
+      expect(isEmptyCell(` ${dash} `)).toBe(true);
+    }
+    expect(isEmptyCell("a—b")).toBe(false);
   });
 });
 

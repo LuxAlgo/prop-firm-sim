@@ -185,8 +185,10 @@ export const GENERIC_FORMAT_ADVICE =
   '"r" value, or "pnl" together with a "stop loss" (or a risk amount per trade supplied at import). ' +
   "Other cells may stay empty. Times are YYYY-MM-DD HH:mm, read as UTC unless they carry an explicit offset.";
 
-/** Placeholder cells that mean "no value" in real exports. */
-const EMPTY_CELL_TOKENS = new Set(["", "-", "-", "–", "n/a", "na", "null", "none", "nan"]);
+/** Placeholder cells that mean "no value" in real exports. The dash family
+ *  is hyphen, em dash, and en dash, the latter two escaped so typography
+ *  passes over prose never touch them. */
+const EMPTY_CELL_TOKENS = new Set(["", "-", "\u2014", "\u2013", "n/a", "na", "null", "none", "nan"]);
 
 /** True when a cell is empty or a known no-value placeholder. */
 export function isEmptyCell(raw: string): boolean {

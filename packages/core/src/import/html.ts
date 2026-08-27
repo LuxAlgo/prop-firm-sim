@@ -20,7 +20,7 @@ const NAMED_ENTITIES: Record<string, string> = {
   apos: "'",
   minus: "−",
   ndash: "–",
-  mdash: "-",
+  mdash: "\u2014", // escaped so typography passes over prose never touch them
   times: "×",
   copy: "©",
   reg: "®",
