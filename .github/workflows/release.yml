@@ -1,21 +1,22 @@
 # Changesets release flow. On every push to main the action either
 # (a) opens/refreshes the "Version Packages" PR from pending changesets, or
-# (b) if that PR was just merged, publishes the bumped packages to npm.
-# Publishing requires the NPM_TOKEN secret; without it the workflow still
-# maintains Version Packages PRs and cleanly skips the npm publish.
+# (b) if the versions on main are ahead of npm, publishes them.
+# Publishing authenticates via npm trusted publishing: each package on
+# npmjs.com names this repo's release.yml as its trusted publisher, and pnpm
+# exchanges the GitHub Actions OIDC token for npm credentials per publish.
+# No npm token or secret is involved.
 name: Release
 
 on:
   push:
     branches: [main]
-  # Manual trigger for the first publish after NPM_TOKEN is added, so nobody
-  # has to push an empty commit to re-run the release.
+  # Manual trigger so a publish can be re-run without pushing a commit.
   workflow_dispatch:
 
 permissions:
   contents: write # push the version branch, create tags/releases
   pull-requests: write # open/update the "Version Packages" PR
-  id-token: write # npm provenance attestation (publishConfig.provenance)
+  id-token: write # npm trusted publishing (OIDC) and provenance attestation
 
 concurrency:
   group: release
@@ -46,32 +47,17 @@ jobs:
       - name: Build publishable packages
         run: pnpm build
 
-      - name: Detect npm credentials
-        id: npm
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -n "$NPM_TOKEN" ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "NPM_TOKEN secret is not configured - skipping npm publish (Version Packages PRs are still maintained)."
-          fi
+      # changesets/action refuses to publish when it finds neither an .npmrc
+      # nor an NPM_TOKEN env var. Real auth comes from trusted publishing
+      # (OIDC), so a registry-only .npmrc satisfies that check without
+      # holding any credential.
+      - name: Point npm at the public registry
+        run: echo "registry=https://registry.npmjs.org/" > "$HOME/.npmrc"
 
       - name: Version PR / publish to npm
-        if: steps.npm.outputs.present == 'true'
         uses: changesets/action@v1
         with:
           version: pnpm exec changeset version
           publish: pnpm exec changeset publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Version PR only (npm publish skipped - no NPM_TOKEN)
-        if: steps.npm.outputs.present != 'true'
-        uses: changesets/action@v1
-        with:
-          version: pnpm exec changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
