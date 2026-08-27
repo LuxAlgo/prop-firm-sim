@@ -1,5 +1,11 @@
 # @luxalgo/prop-firm-sim-core
 
+## 1.1.2
+
+### Patch Changes
+
+- Results report the correct engine version: the ENGINE_VERSION constant echoed in every SimResult now matches the published package version, and a test keeps the two aligned so they cannot drift again. Version 1.1.1 still reported itself as engine 1.1.0; the simulated numbers were unaffected.
+
 ## 1.1.1
 
 ### Patch Changes

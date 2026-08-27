@@ -1,5 +1,6 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { simulate } from "../src/index.js";
+import { ENGINE_VERSION, simulate } from "../src/index.js";
 import { baseSpec } from "./helpers.js";
 
 /*
@@ -32,5 +33,12 @@ describe("engine golden", () => {
       { paths: 1500, seed: 123, includeHistograms: false },
     );
     expect(result).toMatchSnapshot();
+  });
+
+  it("results report the engine version of the installed package", () => {
+    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as {
+      version: string;
+    };
+    expect(ENGINE_VERSION).toBe(pkg.version);
   });
 });

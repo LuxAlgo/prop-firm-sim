@@ -1,5 +1,5 @@
 /** Bump together with the package version. Echoed in every SimResult. */
-export const ENGINE_VERSION = "1.1.0";
+export const ENGINE_VERSION = "1.1.2";
 
 /**
  * Rendered by every surface that shows results (CLI, MCP, web UI).
