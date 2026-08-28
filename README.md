@@ -23,23 +23,17 @@
 
 <br>
 
-An evaluation costs $49 to $700 per attempt, and the industry selling them has never shown a
-customer an EV calculation. This repo is the missing math: a pure, deterministic Monte Carlo
-engine that plays your trading statistics through a firm's exact ruleset, ten thousand complete
-challenge journeys at a time. Out come the numbers the sales page skips: pass probability per
-phase and joint, with confidence intervals. Expected attempts, total cost, and expected value
-with every fee priced in. Time to funding, stagnation, and the probability a funded account
-ever collects a payout.
+Prop Firm Sim tells you your odds before you pay for a prop-firm challenge. Give it your
+trading statistics, or your actual trade history, and it plays ten thousand complete challenge
+journeys through the firm's exact ruleset. Out come the numbers that matter: pass probability
+per phase and joint, with confidence intervals. Expected attempts, total cost, and expected
+value with every fee priced in. Time to funding, stagnation, and the probability a funded
+account ever collects a payout.
 
-Firm rules come live from [LuxAlgo's public prop-firm directory](https://www.luxalgo.com/prop-firms/)
-(keyless, read-only), adapted under a strict honesty policy: structured rule columns are used
-verbatim, free text is inferred only when unambiguous and always disclosed, ambiguity is
-refused rather than guessed. Any ruleset can also be passed inline, fully offline.
-
-<p align="center">
-  <img src="./docs/assets/simulator-dark.png" alt="Simulation results: the attempt verdict with pass, fail and timeout shares, then a KPI grid with per phase pass rates, joint pass probability, net EV, payout probability, expected cost and stagnation" width="100%">
-</p>
-<p align="center"><sub><b><a href="https://www.luxalgo.com/prop-firms/">The hosted simulator</a></b> after one run: verdict, per phase and joint pass rates, EV with fees priced in, and the stagnation tile. Everything runs client side; nothing you enter leaves your browser.</sub></p>
+The engine is pure, deterministic TypeScript: everything runs locally, and the same seed
+reproduces the same numbers byte for byte. Firm rules come live from
+[LuxAlgo's public prop-firm directory](https://www.luxalgo.com/prop-firms/) (keyless,
+read-only), and any ruleset can be passed inline, fully offline.
 
 ## Thirty seconds to your odds
 
@@ -93,6 +87,13 @@ step-one attempts, while 26% of the funded accounts blow up within 90 trading da
 win rate three points (the built-in sensitivity panel shows exactly this) and the picture
 darkens fast.
 
+Prefer a browser? The same run in [the hosted simulator](https://www.luxalgo.com/prop-firms/):
+
+<p align="center">
+  <img src="./docs/assets/simulator-dark.png" alt="Simulation results: the attempt verdict with pass, fail and timeout shares, then a KPI grid with per phase pass rates, joint pass probability, net EV, payout probability, expected cost and stagnation" width="100%">
+</p>
+<p align="center"><sub><b><a href="https://www.luxalgo.com/prop-firms/">The hosted simulator</a></b> after one run: verdict, per phase and joint pass rates, EV with fees priced in, and the stagnation tile. Everything runs client side; nothing you enter leaves your browser.</sub></p>
+
 ## Why your odds are worse than you think
 
 Every prop-firm calculator you have seen multiplies a win rate into a binomial formula. That
@@ -116,9 +117,8 @@ target. They live in the exact mechanics of the loss rules.
    overstates your pass probability, and the flattery lands exactly where the rules bite.
 
 4. **The risk that maximizes passing is not the risk that maximizes EV.** Passing wants small
-   risk, to survive the floors. EV wants more, because fees are fixed and payouts scale. Nobody
-   selling challenges will show you this curve, so here it is, from a realistic two-step
-   ruleset, reproducible with one command:
+   risk, to survive the floors. EV wants more, because fees are fixed and payouts scale. Here
+   is that curve, from a realistic two-step ruleset, reproducible with one command:
 
 <p align="center">
   <img src="./docs/assets/risk-sweep.svg" alt="Risk sweep: pass probability and EV against risk per trade. The two maxima land on different risk sizes." width="100%">
@@ -136,8 +136,8 @@ npx @luxalgo/prop-firm-sim-cli optimal-risk --firm ftmo --challenge 100k-2step \
 6. **Getting funded is not getting paid.** Consistency rules are simulated: one outsized day
    raises your effective target, and the extra days at risk are sometimes the days the trailing
    floor gets hit. So is payout gating: winning-day minimums, profit buffers, per-payout caps.
-   Results report the number firms never advertise, the probability a funded account ever
-   collects a payout, and how long the first one takes.
+   Results report the probability a funded account ever collects a payout, and how long the
+   first one takes.
 
 7. **Dead time is part of the price.** Every result reports stagnation: the longest stretch of
    days without a new equity high inside an attempt. Cutting risk raises your pass odds and
