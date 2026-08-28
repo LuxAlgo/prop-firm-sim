@@ -78,7 +78,10 @@ engine states how it models these via the assumption flags `consistency-stop-rul
 `bootstrap_simulate` also accepts timestamped trade logs instead of a bare R-multiple series:
 `tradeLogText` (one pasted CSV/TSV log with a header row; open time and R required, close time and
 direction optional, timestamps without an offset are read as UTC) or `tradeLogTexts` (2 to 5 logs,
-portfolio mode). Timestamps unlock three things:
+portfolio mode). Real platform exports (TradingView, MT4/MT5 statements, MT5 deals, ThinkOrSwim)
+and broker trade-history JSON in the [@luxalgo/broker-sdk](https://github.com/LuxAlgo/broker-sdk)
+shape are auto-detected; imports that carry P&L but no risk data need `importRisk`. Timestamps
+unlock three things:
 
 - **Derived trade frequency.** `tradesPerDay` becomes optional: when omitted it is derived from the
   log's own timestamps, and the output says so.

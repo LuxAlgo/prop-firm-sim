@@ -157,7 +157,9 @@ ratchet up beneath the paths.
 Summary stats are a start. Timestamps are the truth. Paste or upload your trade history: real
 platform exports import directly (TradingView list of trades, MT4/MT5 statements including the
 HTML reports, MT5 deals tables, ThinkOrSwim account statements), along with plain timestamped
-CSVs and a documented generic template. Files that carry P&L but no risk data are refused until
+CSVs, a documented generic template, and broker trade history as JSON in the open-source
+[@luxalgo/broker-sdk](https://github.com/LuxAlgo/broker-sdk) shape, so a live broker pull drops
+straight into the simulator. Files that carry P&L but no risk data are refused until
 you state the risk you took per trade: R-multiples are computed, never fabricated. With
 timestamps in hand, two more questions become answerable:
 

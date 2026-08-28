@@ -18,8 +18,11 @@ export interface DocTable {
 }
 
 export interface ImportDoc {
-  kind: "csv" | "html";
+  kind: "csv" | "html" | "json";
+  /** Empty for "json" documents, which carry the parsed value instead. */
   tables: DocTable[];
+  /** The parsed JSON value, present only when kind is "json". */
+  json?: unknown;
 }
 
 export interface AdapterMatch {

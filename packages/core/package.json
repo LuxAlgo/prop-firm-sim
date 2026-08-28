@@ -1,6 +1,6 @@
 {
   "name": "@luxalgo/prop-firm-sim-core",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Seedable, browser-safe Monte Carlo engine for prop-firm challenge simulation: pass probability, expected attempts, expected cost, EV, and optimal risk sizing from a trader profile and a firm's exact ruleset - with every assumption visible.",
   "license": "MIT",
   "type": "module",

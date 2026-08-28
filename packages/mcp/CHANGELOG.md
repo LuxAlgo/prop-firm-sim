@@ -1,5 +1,16 @@
 # @luxalgo/prop-firm-sim-mcp
 
+## 1.2.0
+
+### Minor Changes
+
+- Import broker trade-history JSON in the open-source @luxalgo/broker-sdk shape: a bare fills array, `{"trades": [...]}`, or a full account snapshot (`accounts[].trades`, exactly one account carrying trades). Fills replay FIFO into flat-to-flat round trips (volume-weighted basis, reversal splitting, fee proration); P&L comes from prices with a contract-multiplier disclosure in every result; fills without `executedAt` are skipped loudly; snapshots with trades in several accounts are refused with instructions instead of being merged. The CLI `--trade-log` flag and the MCP `tradeLogText`/`tradeLogTexts` inputs auto-detect the shape, so a live broker pull feeds the simulator directly; imports that carry P&L but no risk data still require `--import-risk`/`importRisk`, and R is never fabricated.
+
+### Patch Changes
+
+- Updated dependencies
+  - @luxalgo/prop-firm-sim-core@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes

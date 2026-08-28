@@ -81,12 +81,15 @@ are reported separately and never feed the simulator.
 
 ## Detection, in order
 
-1. Input kind: all tokens numeric (optional R suffix) is an R series; `[`
-   opens a JSON array; a single numeric column under an r-ish header is
-   still an R series; anything else is tabular.
+1. Input kind: all tokens numeric (optional R suffix) is an R series; a
+   JSON array of numbers stays an R series while an array of objects goes
+   to the importer; a single numeric column under an r-ish header is still
+   an R series; anything else is tabular.
 2. Encoding repair: strip a UTF-8 BOM; detect NUL-interleaved wrong-charset
    text and repair it with a warning.
-3. HTML detection and table extraction, or delimiter sniffing
+3. Document shape: text opening with `{` or `[` is parsed as JSON
+   (unparseable JSON refuses with the parser's message); otherwise HTML
+   detection and table extraction, or delimiter sniffing
    (comma/semicolon/tab/pipe by column-count consistency) and tokenizing.
 4. Header/section location: headers are found behind statement preambles,
    and the WHOLE table is scanned for section headers because a real MT5
@@ -100,13 +103,14 @@ are reported separately and never feed the simulator.
 
 ## Bundled adapters
 
-| Adapter       | Handles                                                                                                                                                                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `thinkorswim` | Account statements: fills from Account Trade History (or rebuilt from Cash Balance TRD descriptions), fees matched back by timestamp and symbol, order-history noise never read, non-stock legs refused (multipliers are not in the file)   |
-| `tradingview` | Strategy-tester list of trades, both generations, any currency suffix: exit-first row pairs, mirrored totals read once, "Open" placeholder exits become open trades. No symbol, no risk data, so needs-risk by construction                 |
-| `metatrader`  | MT4 statements (CSV/HTML) and MT5 history Positions: net P&L = Profit + Commission + Taxes + Swap, R derived from S/L through the trade's own P&L, pendings and ledger rows skipped, Open Trades sections imported as open, never as closed |
-| `mt5-deals`   | MT5 Deals tables (the only trade data in tester reports): fill side inverts position direction on "out" deals, in/out labels cross-checked against a replayed net position, reversal deals split, gross profit netted with both legs' fees  |
-| `generic-csv` | Everything else: row shape chosen from which columns exist (trade-per-row, entry/exit events, raw executions), Status-column noise dropped, split Date+Time merged, price-derived P&L only with a disclosed assumption                      |
+| Adapter       | Handles                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `broker-json` | Broker trade-history JSON in the [@luxalgo/broker-sdk](https://github.com/LuxAlgo/broker-sdk) shape: a bare fills array, `{"trades": [...]}`, or a snapshot's `accounts[].trades` (exactly one account with trades; several are refused with instructions). Fills replay FIFO into round trips; P&L comes from prices with a contract-multiplier disclosure; fee is a positive cost, negative is a rebate; fills without executedAt are skipped loudly |
+| `thinkorswim` | Account statements: fills from Account Trade History (or rebuilt from Cash Balance TRD descriptions), fees matched back by timestamp and symbol, order-history noise never read, non-stock legs refused (multipliers are not in the file)                                                                                                                                                                                                              |
+| `tradingview` | Strategy-tester list of trades, both generations, any currency suffix: exit-first row pairs, mirrored totals read once, "Open" placeholder exits become open trades. No symbol, no risk data, so needs-risk by construction                                                                                                                                                                                                                            |
+| `metatrader`  | MT4 statements (CSV/HTML) and MT5 history Positions: net P&L = Profit + Commission + Taxes + Swap, R derived from S/L through the trade's own P&L, pendings and ledger rows skipped, Open Trades sections imported as open, never as closed                                                                                                                                                                                                            |
+| `mt5-deals`   | MT5 Deals tables (the only trade data in tester reports): fill side inverts position direction on "out" deals, in/out labels cross-checked against a replayed net position, reversal deals split, gross profit netted with both legs' fees                                                                                                                                                                                                             |
+| `generic-csv` | Everything else: row shape chosen from which columns exist (trade-per-row, entry/exit events, raw executions), Status-column noise dropped, split Date+Time merged, price-derived P&L only with a disclosed assumption                                                                                                                                                                                                                                 |
 
 Header subtleties encoded in `aliases.ts` rather than in any one adapter:
 ambiguous `Type`/`Side`/`Action`/`Direction` columns are resolved by

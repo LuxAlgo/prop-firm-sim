@@ -1,6 +1,6 @@
 {
   "name": "@luxalgo/prop-firm-sim-cli",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "CLI for the open-source prop-firm challenge simulator: pass probability, expected attempts, expected cost, EV, and optimal risk sizing against real firms' public rulesets.",
   "license": "MIT",
   "type": "module",

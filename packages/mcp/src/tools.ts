@@ -1485,9 +1485,11 @@ const NEWS_CURRENCIES = ["USD", "EUR", "GBP", "JPY", "AUD", "CAD", "CHF", "NZD"]
 const TRADE_LOG_FORMAT_DOC =
   "Accepted formats, auto-detected: the generic CSV template (header: open time,close time,symbol," +
   "direction,quantity,entry price,exit price,stop loss,pnl,fees,r), plain timestamped CSV/TSV logs " +
-  "(open time + R columns), and real platform exports: TradingView strategy-tester list of trades " +
+  "(open time + R columns), real platform exports: TradingView strategy-tester list of trades " +
   "(both generations), MT4/MT5 account statements (CSV or pasted HTML), MT5 deals tables, and " +
-  "ThinkOrSwim account statements. Timestamps WITHOUT an explicit offset are read as UTC. Files that " +
+  "ThinkOrSwim account statements, plus broker trade-history JSON in the @luxalgo/broker-sdk shape " +
+  '(a bare fills array, {"trades": [...]}, or one snapshot account; fills replay FIFO into round ' +
+  "trips with price-based P&L, disclosed). Timestamps WITHOUT an explicit offset are read as UTC. Files that " +
   "carry P&L but no risk information need importRisk to become R-multiples; ambiguous rule readings " +
   "are refused with diagnostics rather than guessed, and skipped rows are reported as warnings.";
 
@@ -1541,7 +1543,7 @@ const bootstrapSimulateSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Risk per trade for imports that carry P&L but no risk data (e.g. TradingView, MT5 deals, " +
+      "Risk per trade for imports that carry P&L but no risk data (e.g. TradingView, MT5 deals, broker JSON, " +
         'ThinkOrSwim): cash risked per trade ("25") or a percent of entry value ("1%"). Applies to ' +
         "tradeLogText/tradeLogTexts only, is labeled rSource inferred, and is never applied silently: " +
         "without it such files are refused with needs-risk.",
@@ -1911,7 +1913,7 @@ const analyzePortfolioOverlapSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Risk per trade for imports that carry P&L but no risk data (e.g. TradingView, MT5 deals, " +
+      "Risk per trade for imports that carry P&L but no risk data (e.g. TradingView, MT5 deals, broker JSON, " +
         'ThinkOrSwim): cash risked per trade ("25") or a percent of entry value ("1%"). Applies to ' +
         "tradeLogText/tradeLogTexts only, is labeled rSource inferred, and is never applied silently: " +
         "without it such files are refused with needs-risk.",

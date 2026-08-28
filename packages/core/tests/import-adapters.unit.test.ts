@@ -351,6 +351,124 @@ describe("failure modes refuse loudly, never throw, never guess", () => {
   });
 });
 
+describe("broker trades JSON (the broker-sdk shape)", () => {
+  const brokerTrades = [
+    { symbol: "AAPL", side: "buy", quantity: 10, price: 100, fee: 1, executedAt: "2026-01-05T14:30:00Z" },
+    { symbol: "AAPL", side: "sell", quantity: 10, price: 110, fee: 1, executedAt: "2026-01-07T16:00:00Z" },
+    { symbol: "TSLA", side: "sell", quantity: 5, price: 200, executedAt: "2026-01-06T10:00:00Z" },
+    { symbol: "TSLA", side: "buy", quantity: 5, price: 190, executedAt: "2026-01-08T11:30:00Z" },
+  ];
+
+  it("a bare fills array replays into round trips with price-based P&L and a stated-risk R", () => {
+    const result = importTradeHistory(JSON.stringify(brokerTrades), {
+      riskSpec: { type: "fixed-cash", amount: 25 },
+    });
+    expect(result.ok).toBe(true);
+    expect(result.format.kind).toBe("broker-json");
+    expect(result.format.confidence).toBe("exact");
+    expect(result.trades).toHaveLength(2);
+    const [aapl, tsla] = result.trades;
+    expect(aapl!.symbol).toBe("AAPL");
+    expect(aapl!.direction).toBe("long");
+    expect(aapl!.entryTime).toBe(Date.parse("2026-01-05T14:30:00Z"));
+    expect(aapl!.pnl).toBeCloseTo(98, 10); // (110 - 100) * 10 minus 2 in fees
+    expect(aapl!.r).toBeCloseTo(98 / 25, 10);
+    expect(aapl!.rSource).toBe("inferred");
+    expect(tsla!.direction).toBe("short");
+    expect(tsla!.pnl).toBeCloseTo(50, 10); // (200 - 190) * 5, no fees
+    expect(tsla!.r).toBeCloseTo(2, 10);
+    expect(result.r.status).toBe("ready");
+    expect(codes(result)).toContain("pnl-from-prices");
+    const bridge = toTradeLogEntries(result.trades);
+    expect(bridge.entries).toHaveLength(2);
+    expect(bridge.dropped).toBe(0);
+  });
+
+  it("without a risk assumption the import asks for one instead of inventing R", () => {
+    const result = importTradeHistory(JSON.stringify(brokerTrades));
+    expect(result.ok).toBe(true);
+    expect(result.r.status).toBe("needs-risk");
+    expect(codes(result)).toContain("needs-risk");
+    expect(result.trades.every((trade) => trade.r === null)).toBe(true);
+  });
+
+  it("partial exits reconstruct one flat-to-flat trade with a volume-weighted exit", () => {
+    const scaled = [
+      { symbol: "MSFT", side: "buy", quantity: 10, price: 100, executedAt: "2026-02-02T10:00:00Z" },
+      { symbol: "MSFT", side: "sell", quantity: 4, price: 110, executedAt: "2026-02-02T12:00:00Z" },
+      { symbol: "MSFT", side: "sell", quantity: 6, price: 120, executedAt: "2026-02-02T15:00:00Z" },
+    ];
+    const result = importTradeHistory(JSON.stringify(scaled));
+    expect(result.trades).toHaveLength(1);
+    const trade = result.trades[0]!;
+    expect(trade.pnl).toBeCloseTo(160, 10); // (110-100)*4 + (120-100)*6
+    expect(trade.exitPrice).toBeCloseTo(116, 10); // (110*4 + 120*6) / 10
+    expect(trade.quantity).toBe(10);
+  });
+
+  it("the {trades} container (one account, or the SDK statement importer output) imports the same", () => {
+    const result = importTradeHistory(JSON.stringify({ trades: brokerTrades, skippedRows: [] }));
+    expect(result.ok).toBe(true);
+    expect(result.format.kind).toBe("broker-json");
+    expect(result.trades).toHaveLength(2);
+  });
+
+  it("a snapshot picks the single account that carries trades and says so", () => {
+    const snapshot = {
+      accounts: [
+        { id: "acc-1", name: "Cash", currency: "USD", equity: 1000, positions: [], trades: [] },
+        { id: "acc-2", name: "Margin", currency: "USD", equity: 5000, positions: [], trades: brokerTrades },
+      ],
+    };
+    const result = importTradeHistory(JSON.stringify(snapshot));
+    expect(result.ok).toBe(true);
+    expect(result.trades).toHaveLength(2);
+    expect(codes(result)).toContain("snapshot-account-selected");
+  });
+
+  it("a snapshot with trades in several accounts is refused with instructions, never merged", () => {
+    const snapshot = {
+      accounts: [
+        { id: "acc-1", name: "Cash", trades: brokerTrades },
+        { id: "acc-2", name: "Margin", trades: brokerTrades },
+      ],
+    };
+    const result = importTradeHistory(JSON.stringify(snapshot));
+    expect(result.ok).toBe(false);
+    expect(codes(result)).toContain("snapshot-multi-account");
+  });
+
+  it("fills without executedAt are skipped loudly, and the replay gap is disclosed", () => {
+    const withGap = [...brokerTrades.slice(0, 2), { symbol: "NVDA", side: "buy", quantity: 1, price: 500 }];
+    const result = importTradeHistory(JSON.stringify(withGap));
+    expect(result.trades).toHaveLength(1);
+    expect(result.stats.skippedRows).toBe(1);
+    expect(codes(result)).toContain("fills-missing-time");
+  });
+
+  it("a pasted JSON array of trade objects routes to the importer, not the R-series path", () => {
+    expect(detectInputKind(JSON.stringify(brokerTrades))).toBe("tabular");
+    const parsed = parseTraderInput(JSON.stringify(brokerTrades));
+    expect(parsed.kind).toBe("import");
+    if (parsed.kind === "import") expect(parsed.result.format.kind).toBe("broker-json");
+  });
+
+  it("truncated JSON refuses with a parse diagnostic instead of guessing", () => {
+    const result = importTradeHistory('{"trades": [');
+    expect(result.ok).toBe(false);
+    expect(codes(result)).toContain("json-invalid");
+  });
+
+  it("JSON that is not a trade history refuses with the expected shapes spelled out", () => {
+    const result = importTradeHistory(JSON.stringify({ hello: "world" }));
+    expect(result.ok).toBe(false);
+    expect(codes(result)).toContain("json-unrecognized");
+    const numbers = importTradeHistory("[1.5, -1, 2]");
+    expect(numbers.ok).toBe(false);
+    expect(numbers.issues.some((issue) => issue.message.includes("R-multiple series"))).toBe(true);
+  });
+});
+
 describe("the fixture corpus never throws and never silently mangles", () => {
   const files = readdirSync(FIXTURES);
   for (const name of files) {

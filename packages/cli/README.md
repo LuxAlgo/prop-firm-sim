@@ -136,8 +136,12 @@ prop-firm-sim simulate --spec my-challenge.json --risk 0.5% \
 `--trade-log <file>` bootstraps from a timestamped log instead of a bare R-series: CSV/TSV with a
 header row, an open-time column and an R column required, close time and direction optional
 (loose header names like `openedAt`/`entry`/`time`, `closedAt`/`exit`, `r`/`result`,
-`direction`/`side` are matched). Timestamps without an explicit offset are read as UTC, and parse
-warnings go to stderr. Timestamps unlock three things:
+`direction`/`side` are matched). Real platform exports (TradingView list of trades, MT4/MT5
+statements including HTML, MT5 deals tables, ThinkOrSwim statements) and broker trade-history
+JSON in the [@luxalgo/broker-sdk](https://github.com/LuxAlgo/broker-sdk) shape are auto-detected
+too; files that carry P&L but no risk data need `--import-risk` (cash per trade like `25`, or a
+percent of entry value like `1%`). Timestamps without an explicit offset are read as UTC, and
+parse warnings go to stderr. Timestamps unlock three things:
 
 - **Derived trade frequency.** `--trades-per-day` becomes optional; when omitted it is computed
   from the log's own timestamps and the report says so.

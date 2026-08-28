@@ -37,7 +37,10 @@ const R_TOKEN = /^[+-]?(\d+(\.\d+)?|\.\d+)[rR]?$/;
 /** Route pasted text: an R-multiple series or a tabular trade history. */
 export function detectInputKind(text: string): "r-series" | "tabular" {
   const trimmed = text.trim();
-  if (trimmed === "" || trimmed.startsWith("[")) return "r-series";
+  if (trimmed === "") return "r-series";
+  // A JSON array of objects is a trade history (the broker-json adapter);
+  // a JSON array of numbers keeps the R-series fast path.
+  if (trimmed.startsWith("[")) return /^\[\s*\{/.test(trimmed) ? "tabular" : "r-series";
   const tokens = trimmed.split(/[\s,;]+/).filter((token) => token !== "");
   if (tokens.length > 0 && tokens.every((token) => R_TOKEN.test(token))) return "r-series";
   if (rSeriesHeaderLines(trimmed) !== null) return "r-series";
@@ -176,10 +179,30 @@ function importInner(rawText: string, options: ImportOptions): ImportResult {
     return emptyResult("unknown", "empty input", "low", [], issues);
   }
 
-  // Parse into a document: tables of rows.
+  // Parse into a document: tables of rows, or a JSON value.
   let doc: ImportDoc;
   const head = text.slice(0, 4096);
-  if (/^\s*</.test(text) && /<\s*(!doctype|html|head|body|table|meta|div|title)/i.test(head)) {
+  const headStart = head.trimStart();
+  if (headStart.startsWith("{") || headStart.startsWith("[")) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text) as unknown;
+    } catch (err) {
+      const truncated = issues.some((issue) => issue.code === "input-truncated");
+      addIssue(
+        issues,
+        "error",
+        "json-invalid",
+        `The input starts like JSON but does not parse: ${err instanceof Error ? err.message : String(err)}. ` +
+          (truncated
+            ? "The input was cut at the size cap, which breaks JSON; export a shorter history. "
+            : "") +
+          GENERIC_FORMAT_ADVICE,
+      );
+      return emptyResult("unknown", "unparseable JSON", "low", [], issues);
+    }
+    doc = { kind: "json", tables: [], json: parsed };
+  } else if (/^\s*</.test(text) && /<\s*(!doctype|html|head|body|table|meta|div|title)/i.test(head)) {
     const tables = extractHtmlTables(text, issues, { maxRows });
     if (tables.length === 0) {
       addIssue(
@@ -273,6 +296,22 @@ function importInner(rawText: string, options: ImportOptions): ImportResult {
       confidence = "exact";
       signals = match.signals;
       break;
+    }
+    if (build === null && doc.kind === "json") {
+      // The generic CSV fallback reads tables, so JSON gets its own refusal.
+      const numericArray = Array.isArray(doc.json) && doc.json.every((v) => typeof v === "number");
+      addIssue(
+        issues,
+        "error",
+        "json-unrecognized",
+        numericArray
+          ? "The input is a JSON array of numbers: that is an R-multiple series, not a trade history. " +
+              "Supply it through the R-series input instead."
+          : "The JSON parsed but does not match a known trade-history shape. Expected broker trades " +
+              "(objects with symbol, side, quantity, price, and ideally executedAt) as a bare array, " +
+              'under {"trades": [...]}, or in a snapshot ({"accounts": [{"trades": [...]}]}).',
+      );
+      return emptyResult("unknown", "unrecognized JSON", "low", [], issues);
     }
     if (build === null) {
       const match = genericCsvAdapter.detect(doc);

@@ -153,9 +153,10 @@ addSimOptions(addTraderOptions(addTargetOptions(program.command("simulate"))))
   .description("simulate your stats against one challenge: pass probability, attempts, cost, EV")
   .option(
     "--trade-log <file>",
-    `bootstrap from a trade-history file: the generic CSV template, plain timestamped CSV/TSV logs, or ` +
+    `bootstrap from a trade-history file: the generic CSV template, plain timestamped CSV/TSV logs, ` +
       `real exports (TradingView list of trades, MT4/MT5 statements incl. HTML, MT5 deals, ThinkOrSwim ` +
-      `statements); repeat up to ${MAX_TRADE_LOGS} times to merge a portfolio`,
+      `statements), or broker trade-history JSON (the @luxalgo/broker-sdk shape); repeat up to ` +
+      `${MAX_TRADE_LOGS} times to merge a portfolio`,
     collectRepeatable,
     [] as string[],
   )
