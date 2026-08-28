@@ -446,6 +446,21 @@ describe("broker trades JSON (the broker-sdk shape)", () => {
     expect(codes(result)).toContain("fills-missing-time");
   });
 
+  it("a history that flattens several accounts into one array is refused, never replayed as one curve", () => {
+    const tagged = brokerTrades.map((trade, i) => ({
+      ...trade,
+      broker: "alpaca",
+      accountId: i < 2 ? "acc-1" : "acc-2",
+    }));
+    const result = importTradeHistory(JSON.stringify(tagged));
+    expect(result.ok).toBe(false);
+    expect(codes(result)).toContain("mixed-accounts");
+    const oneAccount = brokerTrades.map((trade) => ({ ...trade, broker: "alpaca", accountId: "acc-1" }));
+    const clean = importTradeHistory(JSON.stringify(oneAccount));
+    expect(clean.ok).toBe(true);
+    expect(clean.trades).toHaveLength(2);
+  });
+
   it("a pasted JSON array of trade objects routes to the importer, not the R-series path", () => {
     expect(detectInputKind(JSON.stringify(brokerTrades))).toBe("tabular");
     const parsed = parseTraderInput(JSON.stringify(brokerTrades));

@@ -1,5 +1,11 @@
 # @luxalgo/prop-firm-sim-core
 
+## 1.2.1
+
+### Patch Changes
+
+- Broker JSON import: refuse a history that flattens several accounts into one array (rows tagged with distinct broker/accountId values), matching the multi-account snapshot refusal. Two equity curves replayed as one produce plausible-looking wrong trades; the error explains how to filter to one account or use portfolio mode.
+
 ## 1.2.0
 
 ### Minor Changes

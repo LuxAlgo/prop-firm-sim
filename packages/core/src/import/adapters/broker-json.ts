@@ -36,6 +36,9 @@ interface BrokerTradeRow {
   price: number;
   fee?: unknown;
   executedAt?: unknown;
+  /** Tags some exports attach per row (e.g. an MCP broker_trades dump). */
+  broker?: unknown;
+  accountId?: unknown;
 }
 
 function isBrokerTrade(value: unknown): value is BrokerTradeRow {
@@ -181,6 +184,28 @@ export const brokerJsonAdapter: ImportAdapter = {
       }
     } else {
       rows = located.trades;
+    }
+
+    // Some exports flatten several accounts into one array, tagging rows
+    // with broker/accountId. Replaying two equity curves as one produces
+    // plausible-looking wrong trades, so distinct tags are refused.
+    const accountTags = new Set<string>();
+    for (const row of rows) {
+      const broker = typeof row.broker === "string" ? row.broker.trim() : "";
+      const accountId = typeof row.accountId === "string" ? row.accountId.trim() : "";
+      if (broker !== "" || accountId !== "") accountTags.add(`${broker}|${accountId}`);
+    }
+    if (accountTags.size > 1) {
+      addIssue(
+        ctx.issues,
+        "error",
+        "mixed-accounts",
+        `The trades carry ${accountTags.size} distinct broker/account tags, so this looks like several ` +
+          "accounts flattened into one history. Accounts do not share one equity curve: filter the " +
+          "export to one account, or import each account separately; portfolio mode takes one log per " +
+          "account.",
+      );
+      return empty;
     }
 
     const maxRows = ctx.options.maxRows ?? DEFAULT_MAX_ROWS;
