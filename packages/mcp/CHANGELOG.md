@@ -1,5 +1,15 @@
 # @luxalgo/prop-firm-sim-mcp
 
+## 1.3.0
+
+### Minor Changes
+
+- Move the MCP server to `@modelcontextprotocol/server` 2 (MCP 2026-07-28) and zod 4.
+
+  - Both transports speak the stateless 2026-07-28 protocol and still serve 2025-era clients (current Cursor builds included) through the SDK's per-request legacy fallback: stdio via `serveStdio`, `--http` via `createMcpHandler` + `@modelcontextprotocol/node`'s `toNodeHandler`. The public surface (`POST /mcp`, `PROP_FIRM_SIM_MCP_PORT`, the CLI flags) is unchanged.
+  - One zod across the workspace: the package now shares core's zod 4, ending the v3/v4 split. Tool input schemas are unchanged in shape and semantics; the two `tradeLogTexts` array bounds carry explicit messages so the "at least 2 / at most 5" guidance no longer depends on zod's wording.
+  - Package `exports` map added: `@luxalgo/prop-firm-sim-mcp` (server factory), `@luxalgo/prop-firm-sim-mcp/tools` (`toolDefinitions`, handlers), `@luxalgo/prop-firm-sim-mcp/directory` (`fetchDirectory`, `resolveFirm`). Deep imports of `dist/*.js` still resolve but are no longer the intended surface. `ToolDefinition.inputShape` is typed as `z.ZodRawShape`.
+
 ## 1.2.0
 
 ### Minor Changes

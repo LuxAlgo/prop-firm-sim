@@ -2,11 +2,15 @@
   McpServer wiring: registers the tools from tools.ts. Transport-agnostic -
   index.ts connects a stdio or Streamable HTTP transport. The server performs
   no I/O of its own beyond the transport (zero telemetry).
+
+  MCP 2026-07-28 is stateless: every request may be served by a fresh
+  instance, so createServer() is a cheap factory the SDK's serveStdio() /
+  createMcpHandler() call per connection or per request.
 */
 
 import { readFileSync } from "node:fs";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
+import { z } from "zod";
 import { toolDefinitions } from "./tools.js";
 
 export const SERVER_NAME = "prop-firm-sim";
@@ -35,7 +39,7 @@ export function createServer(): McpServer {
       {
         title: tool.title,
         description: tool.description,
-        inputSchema: tool.inputShape,
+        inputSchema: z.object(tool.inputShape),
       },
       async (args: unknown): Promise<CallToolResult> => (await tool.handler(args)) as CallToolResult,
     );

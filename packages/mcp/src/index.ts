@@ -3,18 +3,20 @@
   Entry point for the prop-firm-sim MCP server binary.
 
   Default transport is stdio (for process-spawned MCP clients). `--http [port]`
-  serves the same six tools over the MCP Streamable HTTP transport on
-  POST /mcp, using node:http with the SDK's stateless per-request pattern
-  (a fresh server + transport per request; no sessions to leak). The port also
-  honors the PROP_FIRM_SIM_MCP_PORT environment variable.
+  serves the same tools over MCP Streamable HTTP on POST /mcp, stateless: the
+  SDK builds a fresh server per request from createServer(), so there are no
+  sessions to leak. Both entries speak MCP 2026-07-28 and still serve
+  2025-era clients through the SDK's per-request legacy fallback. The port
+  also honors the PROP_FIRM_SIM_MCP_PORT environment variable.
 
   There are no other endpoints and no outbound network calls of any kind -
   the optional HTTP listener is the only network surface (zero telemetry).
 */
 
 import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import { createMcpHandler } from "@modelcontextprotocol/server";
+import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { SERVER_NAME, createServer, serverVersion } from "./server.js";
 
 const DEFAULT_PORT = 3711;
@@ -87,45 +89,38 @@ function writeJsonRpcError(res: ServerResponse, status: number, code: number, me
   res.end(JSON.stringify({ jsonrpc: "2.0", error: { code, message }, id: null }));
 }
 
-/** Stateless Streamable HTTP: a fresh server + transport per request. */
-async function handleHttpRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const path = (req.url ?? "/").split("?")[0];
-  if (path !== "/mcp") {
-    writeJsonRpcError(res, 404, -32000, "Not found. The only endpoint is POST /mcp.");
-    return;
-  }
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    writeJsonRpcError(res, 405, -32000, "Method not allowed. This stateless server only accepts POST /mcp.");
-    return;
-  }
-  try {
-    const server = createServer();
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined, // stateless mode
-      enableJsonResponse: true,
-    });
-    res.on("close", () => {
-      void transport.close();
-      void server.close();
-    });
-    await server.connect(transport);
-    await transport.handleRequest(req, res);
-  } catch (err) {
-    process.stderr.write(`Error handling MCP request: ${err instanceof Error ? err.message : String(err)}\n`);
-    if (!res.headersSent) {
-      writeJsonRpcError(res, 500, -32603, "Internal server error.");
+function logError(context: string, err: unknown): void {
+  process.stderr.write(`${context}: ${err instanceof Error ? err.message : String(err)}\n`);
+}
+
+/**
+ * Stateless Streamable HTTP. The SDK handler owns the protocol surface
+ * (method handling, 2026-07-28 envelopes, the 2025 stateless fallback); this
+ * only gates the path and adapts node:http to the handler's fetch() face.
+ */
+function createHttpRequestHandler(): (req: IncomingMessage, res: ServerResponse) => void {
+  const mcpHandler = createMcpHandler(() => createServer(), {
+    legacy: "stateless",
+    onerror: (err) => logError("MCP request error", err),
+  });
+  const nodeHandler = toNodeHandler(mcpHandler, {
+    onerror: (err) => logError("Error handling MCP request", err),
+  });
+  return (req, res) => {
+    const path = (req.url ?? "/").split("?")[0];
+    if (path !== "/mcp") {
+      writeJsonRpcError(res, 404, -32000, "Not found. The only endpoint is POST /mcp.");
+      return;
     }
-  }
+    void nodeHandler(req, res);
+  };
 }
 
 async function main(): Promise<void> {
   const options = parseCliOptions(process.argv.slice(2));
 
   if (options.http) {
-    const httpServer = createHttpServer((req, res) => {
-      void handleHttpRequest(req, res);
-    });
+    const httpServer = createHttpServer(createHttpRequestHandler());
     httpServer.listen(options.port, () => {
       process.stderr.write(
         `${SERVER_NAME} v${serverVersion()} listening on http://localhost:${options.port}/mcp ` +
@@ -135,8 +130,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  const server = createServer();
-  await server.connect(new StdioServerTransport());
+  // One instance is pinned for the connection's lifetime; the factory is
+  // still what the SDK calls, so the era decision stays with it.
+  serveStdio(() => createServer());
   // stdout belongs to the protocol; status goes to stderr.
   process.stderr.write(`${SERVER_NAME} v${serverVersion()} running on stdio\n`);
 }

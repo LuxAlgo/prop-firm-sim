@@ -1,15 +1,15 @@
 /*
-  Pure tool implementations: local zod (v3) input schemas + transport-free
+  Pure tool implementations: local zod input schemas + transport-free
   handlers that return MCP-shaped results. server.ts wires these onto an
   McpServer; tests call the handlers directly.
 
-  IMPORTANT version note: this package's zod is v3.25 (what the MCP SDK
-  expects); the core package internally uses zod v4. Core's schemas are NEVER
-  passed to the SDK - every tool input schema below is defined locally, and
-  handlers pass plain parsed objects into core, which re-validates everything
-  itself. The local challenge-spec mirror is deliberately permissive
-  (passthrough objects, engine defaults not duplicated) so core stays the
-  single source of validation truth.
+  Schema ownership: every tool input schema below is defined locally and is
+  what the MCP SDK turns into the tool's JSON Schema. Core's own schemas are
+  NEVER passed to the SDK - handlers pass plain parsed objects into core,
+  which re-validates everything itself. The local challenge-spec mirror is
+  deliberately permissive (loose objects, engine defaults not duplicated) so
+  core stays the single source of validation truth. Both packages share one
+  zod (v4), so the SDK, this file and core agree on schema semantics.
 */
 
 import { z } from "zod";
@@ -60,8 +60,9 @@ export interface ToolDefinition {
   name: string;
   title: string;
   description: string;
-  /** zod v3 raw shape, owned by this package - never core's zod v4 schemas. */
-  inputShape: Record<string, z.ZodTypeAny>;
+  /** zod raw shape owned by this package - never core's schemas. Consumers
+   *  wrap it (`z.object(inputShape)`) or hand it to the SDK, which does. */
+  inputShape: z.ZodRawShape;
   handler: (input: unknown) => Promise<ToolResult>;
 }
 
@@ -100,7 +101,7 @@ async function safely(fn: () => ToolResult | Promise<ToolResult>): Promise<ToolR
   }
 }
 
-function parseInput<S extends z.ZodTypeAny>(schema: S, input: unknown): z.infer<S> {
+function parseInput<S extends z.ZodType>(schema: S, input: unknown): z.infer<S> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) throw parsed.error;
   return parsed.data as z.infer<S>;
@@ -182,9 +183,10 @@ const productTypeSchema = z
 /*
   The daily-loss and max-loss rule schemas appear at several places inside a
   ChallengeSpec (challenge level, per step, funded stage). They are factories
-  returning fresh instances so the SDK's JSON-schema conversion inlines every
-  occurrence instead of emitting internal $refs, which some MCP clients
-  flatten poorly - the enums and unit notes must be visible at every site.
+  returning fresh instances so the SDK's JSON-schema conversion (zod's
+  toJSONSchema) inlines every occurrence instead of emitting $refs for a
+  reused schema object, which some MCP clients flatten poorly - the enums
+  and unit notes must be visible at every site.
 */
 const makeDailyLossRuleSchema = () =>
   z
@@ -233,7 +235,7 @@ const makeDailyLossRuleSchema = () =>
             "checked. Default 'intraday'.",
         ),
     })
-    .passthrough()
+    .loose()
     .describe(
       "Daily loss rule: the daily floor is anchor minus limit, reset at each trading-day boundary. " +
         "Exactly one of pct/amount must be set.",
@@ -282,7 +284,7 @@ const makeMaxLossRuleSchema = () =>
             "meaningful when the rule locks (mode 'trailing-locks-at-initial' or locksAtInitial=true).",
         ),
     })
-    .passthrough()
+    .loose()
     .describe("Max (overall) loss rule. `mode` decides whether and how the floor trails the account's peak.");
 
 const stepSchema = z
@@ -334,7 +336,7 @@ const stepSchema = z
               "UNITS (40 = the best day may be at most 40% of total profit).",
           ),
       })
-      .passthrough()
+      .loose()
       .nullable()
       .optional()
       .describe(
@@ -344,7 +346,7 @@ const stepSchema = z
           "complies (see flag 'consistency-stop-rule'). null or omitted = no consistency rule.",
       ),
   })
-  .passthrough()
+  .loose()
   .describe("One evaluation step. Each step starts on a fresh account at the initial balance.");
 
 const feesSchema = z
@@ -382,7 +384,7 @@ const feesSchema = z
           "Default false.",
       ),
   })
-  .passthrough()
+  .loose()
   .describe("Fees - everything that goes into expected total cost.");
 
 const fundedTermsSchema = z
@@ -454,7 +456,7 @@ const fundedTermsSchema = z
               "'funded-consistency-window-approximated').",
           ),
       })
-      .passthrough()
+      .loose()
       .optional()
       .describe(
         "Payout gating - SIMULATED (engine v1), not just flagged: a payout happens only when these " +
@@ -465,7 +467,7 @@ const fundedTermsSchema = z
       ),
     notes: z.string().optional().describe("Free-text funded-stage details that are not simulated."),
   })
-  .passthrough()
+  .loose()
   .describe("Funded-stage terms used for the payout/EV simulation.");
 
 const challengeSpecSchema = z
@@ -494,7 +496,7 @@ const challengeSpecSchema = z
     fees: feesSchema,
     funded: fundedTermsSchema,
     constraints: z
-      .record(z.unknown())
+      .record(z.string(), z.unknown())
       .optional()
       .describe(
         "Informational trading constraints (maxLeverage, newsTrading, weekendHolding, ...). " +
@@ -516,12 +518,12 @@ const challengeSpecSchema = z
             lastVerified: z.string().describe("ISO date the rules were last checked against that page."),
             note: z.string().optional(),
           })
-          .passthrough(),
+          .loose(),
       )
       .optional()
       .describe("Public citations. Optional for inline specs; dataset entries always carry them."),
   })
-  .passthrough()
+  .loose()
   .describe(
     "A complete, simulatable challenge ruleset (ChallengeSpec) - the exact shape get_challenge_rules " +
       "returns. The engine re-validates it and applies documented defaults. " +
@@ -1528,8 +1530,11 @@ const bootstrapSimulateSchema = z.object({
     ),
   tradeLogTexts: z
     .array(z.string().min(1))
-    .min(2)
-    .max(5)
+    .min(
+      2,
+      "tradeLogTexts (portfolio mode) needs at least 2 trade histories; pass one log as tradeLogText instead.",
+    )
+    .max(5, "tradeLogTexts accepts at most 5 trade histories per call.")
     .optional()
     .describe(
       "PORTFOLIO MODE: 2 to 5 timestamped trade logs (same format as tradeLogText), one per strategy or " +
@@ -1900,8 +1905,8 @@ export async function handleBootstrapSimulate(input: unknown): Promise<ToolResul
 const analyzePortfolioOverlapSchema = z.object({
   tradeLogTexts: z
     .array(z.string().min(1))
-    .min(2)
-    .max(5)
+    .min(2, "tradeLogTexts needs at least 2 trade histories to measure overlap between them.")
+    .max(5, "tradeLogTexts accepts at most 5 trade histories per call.")
     .describe(
       "2 to 5 timestamped trade logs, one per account or strategy. " +
         TRADE_LOG_FORMAT_DOC +
