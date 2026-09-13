@@ -63,6 +63,7 @@ export function simulate(
         outcome: record.firstAttemptPassed ? "passed" : record.firstAttemptFailReason!,
         equity: tracers.challenge.equity,
         floor: tracers.challenge.floor,
+        dailyFloor: tracers.challenge.dailyFloor,
         stepBoundaries: tracers.challenge.stepBoundaries,
       });
       if (tracers.funded.equity.length > 0) {
@@ -71,6 +72,7 @@ export function simulate(
           outcome: record.fundedBlown ? "blown" : "survived",
           equity: tracers.funded.equity,
           floor: tracers.funded.floor,
+          dailyFloor: tracers.funded.dailyFloor,
         });
       }
     }

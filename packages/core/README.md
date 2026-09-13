@@ -116,3 +116,17 @@ own page is always authoritative.
 ## License
 
 MIT © LuxAlgo
+
+## Chart traces
+
+Set `tracePaths` above zero in simulation options to return `result.trace`.
+Challenge and funded paths contain aligned `equity`, `floor` (maximum-loss
+boundary), and `dailyFloor` arrays, with one entry per recorded day, including
+a terminal breach day. `dailyFloor` is the equity level enforced for that day,
+anchored before trades and any funded payout; `null` means no daily-loss rule
+applies. It follows step and funded overrides and covers both intraday and
+end-of-day daily-loss rules. Funded `equity` is recorded after any payout, while
+that day's daily boundary remains the one established before trading.
+
+Tracing only observes the simulation; enabling it does not change outcomes.
+Chart rendering and visibility controls belong to the consuming application.

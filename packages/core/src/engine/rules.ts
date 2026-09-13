@@ -115,6 +115,11 @@ export class RuleState {
     return this.maxFloor;
   }
 
+  /** Daily-loss boundary enforced for the current day; null when no daily rule applies. */
+  get currentDailyFloor(): number | null {
+    return this.dailyFloor === Number.NEGATIVE_INFINITY ? null : this.dailyFloor;
+  }
+
   private ratchet(): void {
     let floor = this.peak - this.rules.max.amount;
     const cap = this.rules.max.lockCap;
