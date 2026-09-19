@@ -119,7 +119,7 @@ exports[`engine golden > a fixed spec, profile and seed reproduce the pinned res
       "p95": 11.211640097244368,
     },
   },
-  "engineVersion": "1.2.1",
+  "engineVersion": "1.3.0",
   "ev": {
     "evStandardError": 507.09288116851,
     "evTotal": 44536.179188692186,
