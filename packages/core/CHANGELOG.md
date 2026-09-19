@@ -1,5 +1,11 @@
 # @luxalgo/prop-firm-sim-core
 
+## 1.3.0
+
+### Minor Changes
+
+- 452b286: Expose daily-loss boundaries as `dailyFloor` on challenge and funded traces, aligned with each recorded equity value. Days without a daily-loss rule return `null`. Recording does not change simulation outcomes.
+
 ## 1.2.1
 
 ### Patch Changes
