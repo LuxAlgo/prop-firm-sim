@@ -81,14 +81,14 @@ export function simulateFunded(
       balance += source.nextTradeR(rng) * risk;
       const breach = state.onTradeClose(balance);
       if (breach !== null) {
-        recorder?.day(balance, state.currentMaxFloor);
+        recorder?.day(balance, state.currentMaxFloor, state.currentDailyFloor);
         return { payoutTotal, payoutEvents, blown: true, firstPayoutDay };
       }
     }
 
     const breach = state.onDayClose(balance);
     if (breach !== null) {
-      recorder?.day(balance, state.currentMaxFloor);
+      recorder?.day(balance, state.currentMaxFloor, state.currentDailyFloor);
       return { payoutTotal, payoutEvents, blown: true, firstPayoutDay };
     }
 
@@ -122,7 +122,7 @@ export function simulateFunded(
       }
     }
 
-    recorder?.day(balance, state.currentMaxFloor);
+    recorder?.day(balance, state.currentMaxFloor, state.currentDailyFloor);
   }
 
   return { payoutTotal, payoutEvents, blown: false, firstPayoutDay };

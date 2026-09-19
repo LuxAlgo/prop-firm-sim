@@ -53,9 +53,9 @@ export interface DrawdownTracker {
   maxDrawdown: number;
 }
 
-/** Collects day-close equity and the effective max-loss floor for fan charts. */
+/** Collects day-close equity and the loss boundaries for fan charts. */
 export interface DayRecorder {
-  day(balance: number, maxFloor: number): void;
+  day(balance: number, maxFloor: number, dailyFloor: number | null): void;
   stepEnd?(): void;
 }
 
@@ -115,7 +115,7 @@ export function simulateStep(
         // the account was monitored continuously on the way down.
         const breach = state.onTradeClose(balance);
         if (breach !== null) {
-          recorder?.day(balance, state.currentMaxFloor);
+          recorder?.day(balance, state.currentMaxFloor, state.currentDailyFloor);
           return {
             passed: false,
             failReason: breach,
@@ -154,7 +154,7 @@ export function simulateStep(
 
     const breach = state.onDayClose(balance);
     if (breach !== null) {
-      recorder?.day(balance, state.currentMaxFloor);
+      recorder?.day(balance, state.currentMaxFloor, state.currentDailyFloor);
       return {
         passed: false,
         failReason: breach,
@@ -165,7 +165,7 @@ export function simulateStep(
       };
     }
 
-    recorder?.day(balance, state.currentMaxFloor);
+    recorder?.day(balance, state.currentMaxFloor, state.currentDailyFloor);
 
     if (!objectivesMet && cFrac !== null && balance >= step.targetBalance - epsilon) {
       const profit = balance - initialBalance;

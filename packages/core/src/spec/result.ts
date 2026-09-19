@@ -144,6 +144,10 @@ export interface TracePath {
   equity: number[];
   /** Effective max-loss floor at each day close - this is the line that moves under trailing rules. */
   floor: number[];
+  /** Daily-loss boundary enforced on each recorded day, aligned with equity.
+   * Set from that day's starting balance, before trades or funded withdrawals.
+   * Null means no daily-loss rule applies. Applies to intraday and EOD rules. */
+  dailyFloor: (number | null)[];
   /** Challenge traces: cumulative day index where each completed step ended. */
   stepBoundaries?: number[];
 }
