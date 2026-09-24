@@ -49,7 +49,7 @@
     "url": "git+https://github.com/LuxAlgo/prop-firm-sim.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/LuxAlgo/prop-firm-sim#readme",
+  "homepage": "https://www.luxalgo.com/prop-firm-sim/",
   "bugs": {
     "url": "https://github.com/LuxAlgo/prop-firm-sim/issues"
   },
