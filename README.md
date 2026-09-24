@@ -2,8 +2,10 @@
   <img src="./docs/assets/banner.png" alt="Prop Firm Sim. Know your odds before you pay the fee. Monte Carlo, deterministic, open source." width="100%">
 </p>
 
+<h1 align="center">Prop Firm Sim</h1>
+
 <p align="center">
-  <sub><b>Prop Firm Sim</b> is a <a href="https://www.luxalgo.com">LuxAlgo</a> open-source project. Official repository: <a href="https://github.com/LuxAlgo/prop-firm-sim">github.com/LuxAlgo/prop-firm-sim</a></sub>
+  <sub><b>Prop Firm Sim</b> is a <a href="https://www.luxalgo.com">LuxAlgo</a> open-source project.</sub>
 </p>
 
 <p align="center">
@@ -13,6 +15,7 @@
 </p>
 
 <p align="center">
+  <a href="https://www.luxalgo.com/prop-firm-sim/">Homepage</a>&ensp;·&ensp;
   <a href="#thirty-seconds-to-your-odds">Quickstart</a>&ensp;·&ensp;
   <a href="#why-your-odds-are-worse-than-you-think">Why your odds are worse</a>&ensp;·&ensp;
   <a href="#run-it-on-your-real-trades">Your real trades</a>&ensp;·&ensp;
