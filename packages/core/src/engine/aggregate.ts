@@ -132,6 +132,13 @@ export function buildAssumptionFlags(
       "On each eligible payout day the trader withdraws the maximum the rules allow (profit above any buffer, " +
         "per-payout caps, never below the loss floor); balances and loss floors carry across payouts.",
     );
+    if (spec.funded.payoutRules?.maxPayouts !== undefined) {
+      engine(
+        "funded-payout-limit",
+        "The funded account closes after its last allowed payout; closed accounts count as survived, not " +
+          "blown, and collect nothing further within the horizon.",
+      );
+    }
     if (spec.funded.payoutRules?.consistencyMaxBestDayPct !== undefined) {
       engine(
         "funded-consistency-window-approximated",

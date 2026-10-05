@@ -437,6 +437,23 @@ const fundedTermsSchema = z
           .positive()
           .optional()
           .describe("Absolute currency cap per payout request. Omit for no fixed cap."),
+        payoutCapSchedule: z
+          .array(z.number().positive())
+          .min(1)
+          .optional()
+          .describe(
+            "Currency cap by payout number ([first, second, ...]); the last entry repeats. Applies " +
+              "together with the other caps. Omit for the same cap on every payout.",
+          ),
+        maxPayouts: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            "Lifetime payout limit: the funded account closes after this many payouts (not a breach). " +
+              "Omit for no limit.",
+          ),
         bufferAmount: z
           .number()
           .min(0)
@@ -1108,6 +1125,8 @@ interface RenderableSpec {
       winningDayMinProfit: number;
       maxPayoutPctOfProfit?: number;
       maxPayoutAmount?: number;
+      payoutCapSchedule?: number[];
+      maxPayouts?: number;
       bufferAmount: number;
       consistencyMaxBestDayPct?: number;
     };
@@ -1202,6 +1221,18 @@ export async function handleGetChallengeRules(input: unknown): Promise<ToolResul
         caps.push(fmtMoney(payoutRules.maxPayoutAmount, currency));
       }
       if (caps.length > 0) gates.push(`each payout capped at ${caps.join(" and ")}`);
+      if (payoutRules.payoutCapSchedule !== undefined) {
+        gates.push(
+          `payout caps by payout number: ${payoutRules.payoutCapSchedule.map((c) => fmtMoney(c, currency)).join(", ")}` +
+            (payoutRules.maxPayouts === undefined ||
+            payoutRules.maxPayouts > payoutRules.payoutCapSchedule.length
+              ? " (last cap repeats)"
+              : ""),
+        );
+      }
+      if (payoutRules.maxPayouts !== undefined) {
+        gates.push(`the account closes after ${payoutRules.maxPayouts} payouts`);
+      }
       if (payoutRules.bufferAmount > 0) {
         gates.push(`a ${fmtMoney(payoutRules.bufferAmount, currency)} profit buffer stays in the account`);
       }

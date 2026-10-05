@@ -33,7 +33,8 @@ export interface FundedOutcome {
  * split of it. Balances and loss floors carry across payouts; nothing resets.
  * Payout gating (winning-day minimums, funded consistency per payout window)
  * is enforced when the entry declares `payoutRules`. A blown account keeps
- * payouts already collected.
+ * payouts already collected. With `maxPayouts`, the account closes (not blown)
+ * after that many payouts and the horizon ends there.
  */
 export function simulateFunded(
   spec: ChallengeSpec,
@@ -56,6 +57,8 @@ export function simulateFunded(
   const winningDayMinProfit = pr?.winningDayMinProfit ?? 0;
   const maxPayoutFraction = pr?.maxPayoutPctOfProfit !== undefined ? pr.maxPayoutPctOfProfit / 100 : null;
   const maxPayoutAmount = pr?.maxPayoutAmount ?? null;
+  const payoutCapSchedule = pr?.payoutCapSchedule ?? null;
+  const maxPayouts = pr?.maxPayouts ?? null;
   const bufferAmount = pr?.bufferAmount ?? 0;
   const consistencyFraction =
     pr?.consistencyMaxBestDayPct !== undefined ? pr.consistencyMaxBestDayPct / 100 : null;
@@ -107,6 +110,10 @@ export function simulateFunded(
         let withdrawal = profit - bufferAmount;
         if (maxPayoutFraction !== null) withdrawal = Math.min(withdrawal, maxPayoutFraction * profit);
         if (maxPayoutAmount !== null) withdrawal = Math.min(withdrawal, maxPayoutAmount);
+        if (payoutCapSchedule !== null) {
+          const cap = payoutCapSchedule[Math.min(payoutEvents, payoutCapSchedule.length - 1)]!;
+          withdrawal = Math.min(withdrawal, cap);
+        }
         // A withdrawal may never take the balance to or below the loss floor.
         withdrawal = Math.min(withdrawal, balance - state.currentMaxFloor - epsilon);
 
@@ -123,6 +130,8 @@ export function simulateFunded(
     }
 
     recorder?.day(balance, state.currentMaxFloor, state.currentDailyFloor);
+    // Payout limit reached: the account closes in good standing.
+    if (maxPayouts !== null && payoutEvents >= maxPayouts) break;
   }
 
   return { payoutTotal, payoutEvents, blown: false, firstPayoutDay };

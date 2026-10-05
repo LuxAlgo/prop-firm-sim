@@ -291,6 +291,15 @@ export function describePayoutRules(rules: PayoutRules, currency: string): strin
     caps.push(`${fmtNum(rules.maxPayoutPctOfProfit, 2)}% of accrued profit`);
   if (rules.maxPayoutAmount !== undefined) caps.push(fmtMoney(rules.maxPayoutAmount, currency));
   if (caps.length > 0) parts.push(`each payout capped at ${caps.join(" and ")}`);
+  if (rules.payoutCapSchedule !== undefined) {
+    parts.push(
+      `payout caps by payout number: ${rules.payoutCapSchedule.map((c) => fmtMoney(c, currency)).join(", ")}` +
+        (rules.maxPayouts === undefined || rules.maxPayouts > rules.payoutCapSchedule.length
+          ? " (last cap repeats)"
+          : ""),
+    );
+  }
+  if (rules.maxPayouts !== undefined) parts.push(`the account closes after ${rules.maxPayouts} payouts`);
   if (rules.bufferAmount > 0) {
     parts.push(`a ${fmtMoney(rules.bufferAmount, currency)} profit buffer stays in the account`);
   }

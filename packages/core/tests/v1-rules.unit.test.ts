@@ -181,6 +181,46 @@ describe("funded payout gating (simulated)", () => {
     expect(out.firstPayoutDay).toBe(10);
     expect(out.payoutTotal).toBeCloseTo(4_000 * 0.9, 6);
   });
+
+  it("a cap schedule caps each payout by its number, repeating the last cap", () => {
+    // On-demand, 100% split, caps [$1k, $2k]. +3R a day:
+    // day 1 profit $3k → $1k; day 2 profit $5k → $2k; day 3 profit $6k → $2k (last cap repeats).
+    const spec = fundedSpec({
+      profitSplitPct: 100,
+      payoutFrequency: "on-demand",
+      payoutRules: { payoutCapSchedule: [1_000, 2_000] },
+    });
+    const out = runFunded(spec, [[+3], [+3], [+3]], 3);
+    expect(out.payoutEvents).toBe(3);
+    expect(out.payoutTotal).toBeCloseTo(5_000, 6);
+  });
+
+  it("the account closes after the payout limit, so later losses cannot blow it", () => {
+    // Two payouts of $1k each, then closure. Day 3's -20R would breach the
+    // $90k static floor if the account were still open.
+    const spec = fundedSpec({
+      profitSplitPct: 100,
+      payoutFrequency: "on-demand",
+      payoutRules: { maxPayouts: 2 },
+    });
+    const out = runFunded(spec, [[+1], [+1], [-20]], 3);
+    expect(out.blown).toBe(false);
+    expect(out.payoutEvents).toBe(2);
+    expect(out.payoutTotal).toBeCloseTo(2_000, 3);
+
+    // Without the limit the same script pays twice and then blows.
+    const open = runFunded(
+      fundedSpec({ profitSplitPct: 100, payoutFrequency: "on-demand" }),
+      [[+1], [+1], [-20]],
+      3,
+    );
+    expect(open.blown).toBe(true);
+    expect(open.payoutEvents).toBe(2);
+  });
+
+  it("rejects an empty cap schedule", () => {
+    expect(() => fundedSpec({ payoutRules: { payoutCapSchedule: [] } })).toThrow();
+  });
 });
 
 describe("path tracing", () => {

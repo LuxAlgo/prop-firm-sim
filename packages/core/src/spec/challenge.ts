@@ -268,6 +268,22 @@ export const FundedSpecSchema = z
           .optional()
           .describe("Each payout may withdraw at most this percent of the account's current profit."),
         maxPayoutAmount: z.number().positive().optional().describe("Hard currency cap per payout request."),
+        payoutCapSchedule: z
+          .array(z.number().positive())
+          .min(1)
+          .optional()
+          .describe(
+            "Currency cap by payout number: entry 0 caps the first payout, entry 1 the second, and so on; " +
+              "the last entry repeats for later payouts. Applies together with the other caps (smallest wins).",
+          ),
+        maxPayouts: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            "Lifetime payout limit: the funded account closes after this many payouts (a closure, not a breach).",
+          ),
         bufferAmount: z
           .number()
           .min(0)

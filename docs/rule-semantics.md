@@ -137,7 +137,8 @@ effect is invisible to any calculator that treats consistency as a footnote.
   account's own loss rules over a configurable horizon (default 90 trading
   days). **Payout gating is simulated** via `funded.payoutRules`: winning-day
   minimums (e.g. five $150+ days per payout window), per-payout caps (percent
-  of profit and hard dollar), profit buffers that must stay in the account,
+  of profit, hard dollar, or a schedule by payout number), a lifetime payout
+  limit after which the account closes, profit buffers that must stay in the account,
   and funded consistency evaluated per payout window. Withdrawals take the
   maximum the rules allow and **never cross the loss floor**; balances and
   floors carry across payouts. Results report `payoutProbability` and
